@@ -6,6 +6,7 @@
 
 
 from aip import AipOcr
+from private_constants import APP_ID, API_KEY, SECRET_KEY
 
 __author__ = "wangfei"
 
@@ -13,10 +14,6 @@ __author__ = "wangfei"
     使用百度API进行文字识别
 """
 
-# 定义常量
-APP_ID = "11635823"
-API_KEY = "qLfwDPDWyBtPz4ob2RxS568O"
-SECRET_KEY = "BNj7PXnZdf35ZQKslaasfYkF8xtvE65F"
 
 # 初始化Aip接口对象
 client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
