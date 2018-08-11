@@ -7,6 +7,7 @@ import requests
 import urllib3
 from PIL import Image, ImageFilter, ImageEnhance
 from bs4 import BeautifulSoup
+from common_constants import CODE_POSITION
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -87,9 +88,8 @@ class RecognizeContainer(object):
                 query_url = self.__upload_pic__(file_num)
                 context = self.__get_query_content__(query_url)
                 # 由于12306官方验证码是验证正确验证码的坐标范围,我们取每个验证码中点的坐标(大约值)
-                yanSol = ['35,35', '105,35', '175,35', '245,35', '35,115', '105,115', '175,115', '245,115']
                 # 将坐标保存
-                li.append({yanSol[index]: context})
+                li.append({CODE_POSITION[index]: context})
         return li
 
 
