@@ -33,6 +33,13 @@ class QueryTrain(object):
         except Exception:
             print("查询车次异常，请稍后重试！")
 
+    def get_train_dict(self, train_data):
+        availabel_trains = [i.split('|') for i in train_data]
+        trains_dict = {}
+        for train in availabel_trains:
+            trains_dict[train[3]] = train
+        return trains_dict
+
     def trans_print_data(self, orgi_data):
         """
         格式化并输出数据
