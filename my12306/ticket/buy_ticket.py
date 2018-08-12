@@ -228,8 +228,8 @@ class BuyTicket:
         url = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount"
         # 将字符串转化为需要的时间
         train_date = self.tranceDate(query_date)
-        # print("leftTicket: ", end=" ")
-        # print(parse.quote(trick_data[train_no][12]))
+        print("leftTicket: ", end=" ")
+        print(trick_data[train_no][12])
         data = {
             # 时间
             "train_date": train_date,
@@ -237,8 +237,8 @@ class BuyTicket:
             "train_no": trick_data[train_no][2],
             # 火车代码
             "stationTrainCode": trick_data[train_no][3],
-            # 座位类型 1：硬卧 3：硬座
-            "seatType": "3",
+            # 座位类型 1：硬座 3：硬卧
+            "seatType": 1,
             # 出发点，终止地址
             "fromStationTelecode": trick_data[train_no][6],
             "toStationTelecode": trick_data[train_no][7],
@@ -263,8 +263,8 @@ class BuyTicket:
         print("最后一次确认订单")
         url = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue"
 
-        # print("leftTicket: ", end=" ")
-        # print(parse.quote(trick_data[train_no][12]))
+        print("leftTicket: ", end=" ")
+        print(trick_data[train_no][12])
         data = {
             "passengerTicketStr": PASSENGER_TICKET_STR,
             "oldPassengerStr": OLD_PASSENGER_STR,
@@ -289,7 +289,7 @@ class BuyTicket:
             return resp.json()['data']['submitStatus']
 
     def query_order_wait_time(self, submit_token):
-        query_url = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=time&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=SubmitToken"
+        query_url = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime"
 
         order_id = None
         while order_id is None:
@@ -346,6 +346,8 @@ class BuyTicket:
                         # 订单检查成功，尽心确认订单
                         # 查询订单队列余票
                         self.getQueueCount(ticket_dict_data, REPEAT_SUBMIT_TOKEN, date)
+                        # 休眠5秒，防止太快导致一直排队
+                        time.sleep(5)
                         # 最后一次确认订单
                         ok = self.confirm_single(REPEAT_SUBMIT_TOKEN, key_check_isChange, ticket_dict_data)
                         if ok:
