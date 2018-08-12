@@ -20,7 +20,7 @@ __author__ = "wangfei"
 
 
 # 车票信息
-ticket_info = "武汉 孝感 2018-08-26 K1366"
+ticket_info = "武汉 孝感 2018-08-28 K1366"
 ticInfo = ticket_info.split(" ")
 from_station = ticInfo[0]
 to_station = ticInfo[1]
@@ -209,13 +209,14 @@ class BuyTicket:
     def tranceDate(self, param):
         """
         将传递的字符串转化为时间
-        :param param: 时间： 2017-12-29
+        :param param: 时间： 2018-08-28
         :return: Fri Dec 29 2017 00:00:00 GMT+0800 (中国标准时间)
         """
-        ts = time.mktime(time.strptime(param, "%Y-%m-%d"))
-        s = time.ctime(ts)
-        t1 = s[0:11] + s[20:] + " 00:00:00 GMT+0800 (中国标准时间)"
-        return t1
+        tmp = time.strftime('%a %b %d %Y 00:00:00 %z', time.strptime(param, '%Y-%m-%d')).split('+')
+        # ts = time.mktime(time.strptime(param, "%Y-%m-%d"))
+        # s = time.ctime(ts)
+        # t1 = s[0:11] + s[20:] + " 00:00:00 GMT+0800 (中国标准时间)"
+        return tmp[0] + 'GMT+' + tmp[1] + ' (中国标准时间)'
 
     def getQueueCount(self, trick_data, REPEAT_SUBMIT_TOKEN, query_date):
         """
@@ -226,10 +227,12 @@ class BuyTicket:
         print("检查余票...")
         url = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount"
         # 将字符串转化为需要的时间
-        train_data = self.tranceDate(query_date)
+        train_date = self.tranceDate(query_date)
+        # print("leftTicket: ", end=" ")
+        # print(parse.quote(trick_data[train_no][12]))
         data = {
             # 时间
-            "train_date": train_data,
+            "train_date": train_date,
             # 车次编号
             "train_no": trick_data[train_no][2],
             # 火车代码
@@ -260,6 +263,8 @@ class BuyTicket:
         print("最后一次确认订单")
         url = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue"
 
+        # print("leftTicket: ", end=" ")
+        # print(parse.quote(trick_data[train_no][12]))
         data = {
             "passengerTicketStr": PASSENGER_TICKET_STR,
             "oldPassengerStr": OLD_PASSENGER_STR,
@@ -282,6 +287,27 @@ class BuyTicket:
             print(resp.text)
             # 返回购票结果
             return resp.json()['data']['submitStatus']
+
+    def query_order_wait_time(self, submit_token):
+        query_url = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=time&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=SubmitToken"
+
+        order_id = None
+        while order_id is None:
+            t = datetime.datetime.now()
+            d = t - t.utcfromtimestamp(0)
+            now_time = d.days * 24 * 60 * 60 * 1000 + d.seconds * 1000 + d.microseconds
+            data = {
+                "random": now_time,
+                "tourFlag": "dc",
+                "_json_att": "",
+                "REPEAT_SUBMIT_TOKEN": submit_token
+            }
+            resp = self.req.post(query_url, data=data, headers=self.header)
+            print(resp.text)
+            resp_data = resp.json()['data']
+            order_id = resp_data['orderId']
+            time.sleep(4)
+        return True
 
     def buy_ticket(self, is_auto_buy):
         # 首先登录（包括验证码识别）
@@ -323,8 +349,9 @@ class BuyTicket:
                         # 最后一次确认订单
                         ok = self.confirm_single(REPEAT_SUBMIT_TOKEN, key_check_isChange, ticket_dict_data)
                         if ok:
-                            print("购票成功,退出程序!")
-                            exit(0)
+                            if self.query_order_wait_time(REPEAT_SUBMIT_TOKEN):
+                                print("购票成功,退出程序!")
+                                exit(0)
                         else:
                             # 休眠5秒钟，防止被防刷票封ip
                             time.sleep(5)
@@ -341,7 +368,8 @@ if __name__ == "__main__":
 
     bt = BuyTicket(req, headers)
     bt.buy_ticket(IS_AUTO_BUY)
-
+    # st = "I7Av2ueNwCq5Oa0qYaI2dmr6xUjBZW1F6q5qIFe7ejYbu7oou%2FGwVX72khI%3D"
+    # print(parse.quote(parse.unquote(st)))
     # 首先登录（包括验证码识别）
     # lp = LoginProcess(req, headers)
     # login_result = lp.login()
